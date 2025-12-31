@@ -23,6 +23,14 @@ from src.features.research.constants import (
     PROGRESS_STEP_RANGE,
 )
 
+# RTL languages (ISO 639-1 codes)
+RTL_LANGUAGES = {"fa", "ar", "he", "ur", "yi", "ps", "sd"}
+
+
+def is_rtl_language(lang_code: str) -> bool:
+    """Check if language code is RTL."""
+    return lang_code in RTL_LANGUAGES
+
 
 def configure_page():
     """Configure Streamlit page."""
@@ -43,6 +51,28 @@ def configure_page():
         [data-testid="stMarkdown"] p {
             margin-bottom: 0 !important;
         }
+        .rtl-content {
+            direction: rtl;
+            text-align: right;
+        }
+        .rtl-content h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem 0;
+        }
+        .rtl-content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem 0;
+        }
+        .rtl-content ul, .rtl-content ol {
+            padding-right: 20px;
+            padding-left: 0;
+        }
+        .rtl-content li {
+            list-style-position: inside;
+            margin-bottom: 0.5rem;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -62,11 +92,27 @@ def init_session_state():
         st.session_state.report = None
     if "format" not in st.session_state:
         st.session_state.format = OutputFormat.MARKDOWN.value
+    if "is_rtl" not in st.session_state:
+        st.session_state.is_rtl = False
+    if "topic" not in st.session_state:
+        st.session_state.topic = ""
     # Settings defaults
     if "num_sources" not in st.session_state:
         st.session_state.num_sources = settings.research.default_sources
     if "model" not in st.session_state:
         st.session_state.model = settings.llm.model
+
+
+def sanitize_filename(topic: str, max_length: int = 50) -> str:
+    """Convert topic to a safe filename."""
+    import re
+    # Replace spaces and special chars with underscore
+    filename = re.sub(r'[^\w\s-]', '', topic)
+    filename = re.sub(r'[\s-]+', '_', filename).strip('_')
+    # Truncate if too long
+    if len(filename) > max_length:
+        filename = filename[:max_length].rstrip('_')
+    return filename.lower() or "research"
 
 
 AVAILABLE_MODELS = ["gpt-4o", "gpt-4o-mini"]
@@ -167,17 +213,28 @@ def render_results():
     # Download button
     ext = "md" if output_format == "markdown" else "json"
     mime = "text/markdown" if ext == "md" else "application/json"
+    filename = sanitize_filename(st.session_state.topic)
     st.download_button(
         "📥 Download",
         data=content,
-        file_name=f"research.{ext}",
+        file_name=f"{filename}.{ext}",
         mime=mime,
         use_container_width=True
     )
     
-    # Display content
+    # Display content with RTL support
     if output_format == "markdown":
-        st.markdown(content)
+        if st.session_state.is_rtl:
+            # Convert markdown headers to HTML for consistent RTL rendering
+            import re
+            html_content = content
+            html_content = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html_content, flags=re.MULTILINE)
+            html_content = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html_content, flags=re.MULTILINE)
+            html_content = re.sub(r'^- (.+)$', r'<li>\1</li>', html_content, flags=re.MULTILINE)
+            html_content = html_content.replace('\n\n', '<br><br>')
+            st.markdown(f'<div class="rtl-content">{html_content}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(content)
     else:
         st.code(content, language="json")
     
@@ -204,6 +261,8 @@ def handle_submission(submitted, topic):
                 topic.strip(), st.session_state.num_sources, st.session_state.model, progress_bar, status
             ))
             st.session_state.report = result.report
+            st.session_state.topic = topic.strip()
+            st.session_state.is_rtl = is_rtl_language(result.language)
             status.success("✅ Research complete!")
     except ResearchError as e:
         status.error(f"❌ {e.message}")
