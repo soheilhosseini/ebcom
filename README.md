@@ -35,11 +35,11 @@ src/
 
 ```mermaid
 flowchart LR
-    A[👤 User Input] --> B[🔍 Search<br/>DuckDuckGo]
-    B --> C[📄 Extract<br/>Trafilatura]
-    C --> D[📝 Summarize<br/>OpenAI]
-    D --> E[🧠 Analyze<br/>LangChain]
-    E --> F[📊 Report<br/>JSON/Markdown]
+    A[User Input] --> B[Search]
+    B --> C[Extract]
+    C --> D[Summarize]
+    D --> E[Analyze]
+    E --> F[Report]
 ```
 
 ### Detailed Pipeline
@@ -55,14 +55,14 @@ flowchart TB
         C --> D[Get N source URLs]
     end
     
-    subgraph Process["Process Each Source"]
+    subgraph Process
         D --> E[Fetch webpage]
         E --> F[Extract content]
         F --> G[Smart truncation]
         G --> H[Generate summary]
     end
     
-    subgraph Reasoning["Multi-step Reasoning"]
+    subgraph Reasoning
         H --> I[Combine summaries]
         I --> J[Generate main summary]
         I --> K[Extract key points]
@@ -73,9 +73,9 @@ flowchart TB
         J --> M[Final Report]
         K --> M
         L --> M
-        M --> N{Format?}
-        N -->|Markdown| O[📄 .md file]
-        N -->|JSON| P[📋 .json file]
+        M --> N{Format}
+        N -->|Markdown| O[MD file]
+        N -->|JSON| P[JSON file]
     end
 ```
 
