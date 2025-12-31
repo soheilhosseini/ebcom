@@ -3,7 +3,7 @@ DuckDuckGo search implementation.
 """
 
 from typing import List
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 from src.features.research.domain.models import SearchResult
 
@@ -17,7 +17,7 @@ class DuckDuckGoSearch:
     async def search(self, query: str, num_results: int) -> List[SearchResult]:
         """Search the web for relevant sources."""
         try:
-            raw_results = self._client.text(query, max_results=num_results)
+            raw_results = list(self._client.text(query, max_results=num_results))
             return [
                 SearchResult(
                     url=item.get("href", ""),
@@ -27,5 +27,6 @@ class DuckDuckGoSearch:
                 for item in raw_results
                 if item.get("href")
             ]
-        except Exception:
+        except Exception as e:
+            print(f"Search error: {type(e).__name__}: {e}")
             return []

@@ -18,7 +18,6 @@ from src.features.research.services.research_service import ResearchService
 from src.features.research.domain.models import (
     SearchResult, ExtractedContent, SourceSummary, FinalReport, Citation
 )
-from src.features.research.domain.enums import OutputFormat
 
 
 requested_sources = st.integers(min_value=3, max_value=10)
@@ -89,8 +88,8 @@ def test_property_graceful_degradation_proceeds_with_available_sources(scenario)
     service._formatter.format = MagicMock(return_value="Formatted output")
     
     result = asyncio.run(service.research(
-        topic="test topic", num_sources=requested, output_format=OutputFormat.MARKDOWN
+        topic="test topic", num_sources=requested
     ))
     
     assert result is not None
-    assert result.content == "Formatted output"
+    assert result.report is not None

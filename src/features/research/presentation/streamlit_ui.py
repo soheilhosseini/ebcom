@@ -34,6 +34,15 @@ def configure_page():
     st.markdown("""
     <style>
         .stProgress > div > div > div > div { background-color: #4CAF50; }
+        [data-testid="stButton"] button {
+            background: none !important;
+            border: none !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+        }
+        [data-testid="stMarkdown"] p {
+            margin-bottom: 0 !important;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -53,26 +62,59 @@ def init_session_state():
         st.session_state.report = None
     if "format" not in st.session_state:
         st.session_state.format = OutputFormat.MARKDOWN.value
+    # Settings defaults
+    if "num_sources" not in st.session_state:
+        st.session_state.num_sources = settings.research.default_sources
+    if "model" not in st.session_state:
+        st.session_state.model = settings.llm.model
+
+
+AVAILABLE_MODELS = ["gpt-4o", "gpt-4o-mini"]
+
+
+@st.dialog("Settings")
+def show_settings_dialog():
+    """Render settings dialog."""
+    num_sources = st.slider(
+        "Number of Sources",
+        min_value=settings.research.min_sources,
+        max_value=settings.research.max_sources,
+        value=st.session_state.num_sources,
+        help="How many sources to fetch and analyze"
+    )
+    
+    model = st.selectbox(
+        "Model",
+        options=AVAILABLE_MODELS,
+        index=AVAILABLE_MODELS.index(st.session_state.model) if st.session_state.model in AVAILABLE_MODELS else 0,
+        help="AI model to use for research"
+    )
+    
+    if st.button("Save", use_container_width=True):
+        st.session_state.num_sources = num_sources
+        st.session_state.model = model
+        st.rerun()
 
 
 def render_form():
     """Render input form."""
+    # Settings button outside form
+    col1, col2 = st.columns([20, 1])
+    with col1:
+        st.markdown("**Research Topic**")
+    with col2:
+        if st.button("⚙️", key="settings_btn"):
+            show_settings_dialog()
+    
     with st.form("research_form"):
         topic = st.text_input(
             "Research Topic",
             placeholder="Enter your research topic...",
-            help="Supports any language"
-        )
-        
-        num_sources = st.slider(
-            "Number of Sources",
-            min_value=settings.research.min_sources,
-            max_value=settings.research.max_sources,
-            value=settings.research.default_sources
+            label_visibility="collapsed"
         )
         
         submitted = st.form_submit_button("🚀 Start Research", use_container_width=True)
-        return submitted, topic, num_sources
+        return submitted, topic
 
 
 def create_progress_callback(progress_bar, status):
@@ -89,9 +131,9 @@ def create_progress_callback(progress_bar, status):
     return callback
 
 
-async def execute_research(topic, num_sources, progress_bar, status):
+async def execute_research(topic, num_sources, model, progress_bar, status):
     """Execute research."""
-    service = create_research_service()
+    service = create_research_service(model=model)
     callback = create_progress_callback(progress_bar, status)
     return await service.research(
         topic=topic,
@@ -144,7 +186,7 @@ def render_results():
         st.code(content, language=lang)
 
 
-def handle_submission(submitted, topic, num_sources):
+def handle_submission(submitted, topic):
     """Handle form submission."""
     if not submitted:
         return
@@ -159,26 +201,26 @@ def handle_submission(submitted, topic, num_sources):
     try:
         with st.spinner("Researching..."):
             result = asyncio.run(execute_research(
-                topic.strip(), num_sources, progress_bar, status
+                topic.strip(), st.session_state.num_sources, st.session_state.model, progress_bar, status
             ))
             st.session_state.report = result.report
             status.success("✅ Research complete!")
     except ResearchError as e:
         status.error(f"❌ {e.message}")
         st.session_state.report = None
-    except Exception:
-        status.error("❌ An unexpected error occurred. Please try again.")
+    except Exception as e:
+        status.error(f"❌ Error: {type(e).__name__}: {str(e)}")
         st.session_state.report = None
 
 
 def run_streamlit_app():
     """Main entry point for Streamlit app."""
     configure_page()
-    render_header()
     init_session_state()
+    render_header()
     
-    submitted, topic, num_sources = render_form()
-    handle_submission(submitted, topic, num_sources)
+    submitted, topic = render_form()
+    handle_submission(submitted, topic)
     
     render_results()
     

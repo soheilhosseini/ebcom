@@ -7,9 +7,11 @@ from typing import List, Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from openai import AuthenticationError, RateLimitError, APIError
 
 from src.shared.config import settings
 from src.features.research.domain.models import SourceSummary, FinalReport, Citation
+from src.features.research.domain.exceptions import AIServiceError
 from src.features.research.infrastructure.prompts import (
     get_language_instruction,
     MAIN_SUMMARY_SYSTEM,
@@ -24,9 +26,9 @@ from src.features.research.infrastructure.prompts import (
 class LangChainReportGenerator:
     """Report generation using LangChain."""
     
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str = None, model: str = None):
         self._llm = ChatOpenAI(
-            model=settings.llm.model,
+            model=model or settings.llm.model,
             api_key=api_key or settings.openai_api_key,
             temperature=settings.llm.temperature
         )
@@ -60,8 +62,16 @@ class LangChainReportGenerator:
                 citations=self._build_citations(summaries),
                 language=language
             )
-        except Exception:
-            return None
+        except AIServiceError:
+            raise
+        except AuthenticationError:
+            raise AIServiceError("Invalid OpenAI API key. Please check your API key in .env file.")
+        except RateLimitError:
+            raise AIServiceError("OpenAI rate limit exceeded. Please wait and try again.")
+        except APIError as e:
+            raise AIServiceError(f"OpenAI API error: {e.message}")
+        except Exception as e:
+            raise AIServiceError(f"AI service error: {str(e)}")
     
     def _format_summaries(self, summaries: List[SourceSummary]) -> str:
         """Format summaries for prompts."""

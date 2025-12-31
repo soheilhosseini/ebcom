@@ -1,16 +1,13 @@
 # Dependencies
 node_modules/
-frontend/node_modules/
 
 # Build outputs
-frontend/dist/
+
 *.pyc
 __pycache__/
-backend/__pycache__/
 
 # Environment files
 .env
-backend/.env
 
 # IDE/Editor
 .vscode/
@@ -43,11 +40,10 @@ wheels/
 *.egg
 
 # Hypothesis (property-based testing)
-backend/.hypothesis/
+.hypothesis/
 
 # Pytest
 .pytest_cache/
-backend/.pytest_cache/
 
 # OS files
 .DS_Store

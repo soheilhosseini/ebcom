@@ -4,7 +4,7 @@ OpenAI-based summarization implementation.
 
 from typing import Optional
 
-from openai import AsyncOpenAI, OpenAIError
+from openai import AsyncOpenAI, OpenAIError, APIError, AuthenticationError, RateLimitError
 
 from src.shared.config import settings
 from src.features.research.infrastructure.prompts import (
@@ -12,13 +12,15 @@ from src.features.research.infrastructure.prompts import (
     SUMMARIZATION_SYSTEM,
     SUMMARIZATION_USER,
 )
+from src.features.research.domain.exceptions import AIServiceError
 
 
 class OpenAISummarizer:
-    """Summarization using OpenAI GPT-5 Nano."""
+    """Summarization using OpenAI."""
     
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str = None, model: str = None):
         self._api_key = api_key or settings.openai_api_key
+        self._model = model or settings.llm.model
         self._client = AsyncOpenAI(api_key=self._api_key)
     
     async def summarize(
@@ -41,7 +43,7 @@ class OpenAISummarizer:
         
         try:
             response = await self._client.chat.completions.create(
-                model=settings.llm.model,
+                model=self._model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -53,5 +55,11 @@ class OpenAISummarizer:
             summary = response.choices[0].message.content
             return summary.strip() if summary else None
             
-        except (OpenAIError, Exception):
-            return None
+        except AuthenticationError:
+            raise AIServiceError("Invalid OpenAI API key. Please check your API key in .env file.")
+        except RateLimitError:
+            raise AIServiceError("OpenAI rate limit exceeded. Please wait and try again.")
+        except APIError as e:
+            raise AIServiceError(f"OpenAI API error: {e.message}")
+        except Exception as e:
+            raise AIServiceError(f"AI service error: {str(e)}")

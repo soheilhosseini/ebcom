@@ -43,7 +43,7 @@ LANGUAGE_NAMES = {
 # UI Configuration
 UI_PAGE_TITLE = "Research AI Assistant"
 UI_PAGE_ICON = "🔍"
-UI_POWERED_BY = "Built with Streamlit • Powered by GPT-5 Nano • Search by DuckDuckGo"
+UI_POWERED_BY = "Built with Streamlit • Powered by GPT-4 • Search by DuckDuckGo"
 
 # Progress Steps Mapping (step -> progress percentage)
 PROGRESS_MAP = {

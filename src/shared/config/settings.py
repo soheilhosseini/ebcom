@@ -16,7 +16,7 @@ load_dotenv()
 @dataclass(frozen=True)
 class LLMSettings:
     """Settings for LLM (Language Model) services."""
-    model: str = "gpt-5-nano"
+    model: str = "gpt-4o-mini"
     temperature: float = 0.3
     summary_max_tokens: int = 500
     api_key: Optional[str] = field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
@@ -29,7 +29,7 @@ class ResearchSettings:
     max_sources: int = 10
     default_sources: int = 5
     max_topic_length: int = 500
-    fetch_timeout_seconds: int = 15
+    fetch_timeout_seconds: int = 30
     max_content_chars: int = 8000  # ~2000 tokens
 
 

@@ -31,5 +31,5 @@ class NoSourcesFoundError(ResearchError):
 class AIServiceError(ResearchError):
     """Raised when the AI service is unavailable."""
     
-    def __init__(self):
-        super().__init__("AI service unavailable. Please try again later.")
+    def __init__(self, message: str = "AI service unavailable. Please try again later."):
+        super().__init__(message)
