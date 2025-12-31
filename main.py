@@ -16,7 +16,6 @@ from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 
 from src.features.research.domain.models import ResearchRequest, ProgressEvent
-from src.features.research.domain.enums import OutputFormat
 from src.features.research.domain.exceptions import ResearchError
 from src.features.research.services import create_research_service
 
@@ -81,7 +80,6 @@ async def research_stream(request: ResearchRequest) -> AsyncGenerator[str, None]
         service.research(
             topic=request.topic,
             num_sources=request.num_sources,
-            output_format=request.output_format,
             progress_callback=progress_callback
         )
     )
@@ -100,8 +98,8 @@ async def research_stream(request: ResearchRequest) -> AsyncGenerator[str, None]
         
         result = await research_task
         yield format_sse_event("complete", {
-            "result": result.content,
-            "format": request.output_format.value
+            "report": result.report.model_dump(),
+            "language": result.language
         })
         
     except ResearchError as e:

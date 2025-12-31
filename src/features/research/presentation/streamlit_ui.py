@@ -7,6 +7,7 @@ import streamlit as st
 
 from src.shared.config import settings
 from src.features.research.services import create_research_service
+from src.features.research.infrastructure.formatting import MarkdownJsonFormatter
 from src.features.research.domain import (
     ProgressEvent,
     OutputFormat,
@@ -48,8 +49,8 @@ def render_header():
 
 def init_session_state():
     """Initialize session state."""
-    if "result" not in st.session_state:
-        st.session_state.result = None
+    if "report" not in st.session_state:
+        st.session_state.report = None
     if "format" not in st.session_state:
         st.session_state.format = OutputFormat.MARKDOWN.value
 
@@ -63,24 +64,15 @@ def render_form():
             help="Supports any language"
         )
         
-        col1, col2 = st.columns(2)
-        with col1:
-            num_sources = st.slider(
-                "Number of Sources",
-                min_value=settings.research.min_sources,
-                max_value=settings.research.max_sources,
-                value=settings.research.default_sources
-            )
-        with col2:
-            output_format = st.radio(
-                "Output Format",
-                options=[OutputFormat.MARKDOWN.value, OutputFormat.JSON.value],
-                format_func=lambda x: "Markdown" if x == "markdown" else "JSON",
-                horizontal=True
-            )
+        num_sources = st.slider(
+            "Number of Sources",
+            min_value=settings.research.min_sources,
+            max_value=settings.research.max_sources,
+            value=settings.research.default_sources
+        )
         
         submitted = st.form_submit_button("🚀 Start Research", use_container_width=True)
-        return submitted, topic, num_sources, output_format
+        return submitted, topic, num_sources
 
 
 def create_progress_callback(progress_bar, status):
@@ -97,52 +89,62 @@ def create_progress_callback(progress_bar, status):
     return callback
 
 
-async def execute_research(topic, num_sources, output_format, progress_bar, status):
+async def execute_research(topic, num_sources, progress_bar, status):
     """Execute research."""
     service = create_research_service()
     callback = create_progress_callback(progress_bar, status)
     return await service.research(
         topic=topic,
         num_sources=num_sources,
-        output_format=OutputFormat(output_format),
         progress_callback=callback
     )
 
 
 def render_results():
     """Render research results."""
-    if not st.session_state.result:
+    if not st.session_state.report:
         return
     
     st.divider()
     st.subheader("📄 Research Results")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        ext = "md" if st.session_state.format == "markdown" else "json"
-        mime = "text/markdown" if ext == "md" else "application/json"
-        st.download_button(
-            "📥 Download",
-            data=st.session_state.result,
-            file_name=f"research.{ext}",
-            mime=mime,
-            use_container_width=True
-        )
-    with col2:
-        if st.button("📋 Copy to Clipboard", use_container_width=True):
-            st.toast("Use Ctrl+C to copy from raw content below", icon="📋")
+    # Format selector
+    output_format = st.radio(
+        "Output Format",
+        options=[OutputFormat.MARKDOWN.value, OutputFormat.JSON.value],
+        format_func=lambda x: "Markdown" if x == "markdown" else "JSON",
+        horizontal=True,
+        key="format_selector"
+    )
+    st.session_state.format = output_format
     
-    if st.session_state.format == "markdown":
-        st.markdown(st.session_state.result)
+    # Format the report
+    formatter = MarkdownJsonFormatter()
+    content = formatter.format(st.session_state.report, output_format)
+    
+    # Download button
+    ext = "md" if output_format == "markdown" else "json"
+    mime = "text/markdown" if ext == "md" else "application/json"
+    st.download_button(
+        "📥 Download",
+        data=content,
+        file_name=f"research.{ext}",
+        mime=mime,
+        use_container_width=True
+    )
+    
+    # Display content
+    if output_format == "markdown":
+        st.markdown(content)
     else:
-        st.code(st.session_state.result, language="json")
+        st.code(content, language="json")
     
     with st.expander("📝 View Raw Content"):
-        lang = "markdown" if st.session_state.format == "markdown" else "json"
-        st.code(st.session_state.result, language=lang)
+        lang = "markdown" if output_format == "markdown" else "json"
+        st.code(content, language=lang)
 
 
-def handle_submission(submitted, topic, num_sources, output_format):
+def handle_submission(submitted, topic, num_sources):
     """Handle form submission."""
     if not submitted:
         return
@@ -151,23 +153,22 @@ def handle_submission(submitted, topic, num_sources, output_format):
         st.error("⚠️ Please enter a research topic")
         return
     
-    st.session_state.format = output_format
     progress_bar = st.empty().progress(0)
     status = st.empty()
     
     try:
         with st.spinner("Researching..."):
             result = asyncio.run(execute_research(
-                topic.strip(), num_sources, output_format, progress_bar, status
+                topic.strip(), num_sources, progress_bar, status
             ))
-            st.session_state.result = result.content
+            st.session_state.report = result.report
             status.success("✅ Research complete!")
     except ResearchError as e:
         status.error(f"❌ {e.message}")
-        st.session_state.result = None
+        st.session_state.report = None
     except Exception:
         status.error("❌ An unexpected error occurred. Please try again.")
-        st.session_state.result = None
+        st.session_state.report = None
 
 
 def run_streamlit_app():
@@ -176,8 +177,8 @@ def run_streamlit_app():
     render_header()
     init_session_state()
     
-    submitted, topic, num_sources, output_format = render_form()
-    handle_submission(submitted, topic, num_sources, output_format)
+    submitted, topic, num_sources = render_form()
+    handle_submission(submitted, topic, num_sources)
     
     render_results()
     

@@ -6,7 +6,6 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
 from src.shared.config import settings
-from src.features.research.domain.enums import OutputFormat
 
 
 class ResearchRequest(BaseModel):
@@ -22,10 +21,6 @@ class ResearchRequest(BaseModel):
         ge=settings.research.min_sources,
         le=settings.research.max_sources,
         description="Number of sources to fetch and analyze"
-    )
-    output_format: OutputFormat = Field(
-        default=OutputFormat.MARKDOWN,
-        description="Format for the research output"
     )
 
     @field_validator("topic")
@@ -85,6 +80,5 @@ class ProgressEvent(BaseModel):
 
 class ResearchResult(BaseModel):
     """Final research result."""
-    content: str
-    format: OutputFormat
+    report: FinalReport
     language: str

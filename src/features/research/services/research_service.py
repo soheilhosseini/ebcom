@@ -18,7 +18,7 @@ from src.features.research.domain.interfaces import (
     LanguageDetector,
     OutputFormatter,
 )
-from src.features.research.domain.enums import ProgressStep, OutputFormat
+from src.features.research.domain.enums import ProgressStep
 from src.features.research.domain.exceptions import (
     SearchFailedError,
     NoSourcesFoundError,
@@ -52,7 +52,6 @@ class ResearchService:
         self,
         topic: str,
         num_sources: int,
-        output_format: OutputFormat,
         progress_callback: ProgressCallback = None
     ) -> ResearchResult:
         """Execute the complete research workflow."""
@@ -71,13 +70,9 @@ class ResearchService:
         if not report:
             raise AIServiceError()
         
-        # Format output
-        await self._emit(progress_callback, ProgressStep.FINALIZING, "Finalizing...")
-        content = self._formatter.format(report, output_format.value)
-        
         await self._emit(progress_callback, ProgressStep.COMPLETE, "Complete")
         
-        return ResearchResult(content=content, format=output_format, language=language)
+        return ResearchResult(report=report, language=language)
     
     async def _search_sources(
         self,
