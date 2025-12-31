@@ -19,7 +19,26 @@ KEY_POINTS_MIN = 5
 KEY_POINTS_MAX = 7
 
 # Language Detection
-ARABIC_SCRIPT_LANGUAGES = frozenset({"ar", "fa", "ur"})
+# Map of language codes to their display names (for common languages)
+LANGUAGE_NAMES = {
+    "en": "English",
+    "fa": "Persian",
+    "ar": "Arabic",
+    "ja": "Japanese",
+    "zh-cn": "Chinese (Simplified)",
+    "zh-tw": "Chinese (Traditional)",
+    "ko": "Korean",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "ru": "Russian",
+    "pt": "Portuguese",
+    "it": "Italian",
+    "nl": "Dutch",
+    "tr": "Turkish",
+    "hi": "Hindi",
+    "ur": "Urdu",
+}
 
 # UI Configuration
 UI_PAGE_TITLE = "Research AI Assistant"

@@ -41,7 +41,7 @@ def render_header():
     """Render page header."""
     st.title("🔍 Research AI Assistant")
     st.markdown(
-        "Enter a research topic in **English** or **Persian** "
+        "Enter a research topic in **any language** "
         "to get a comprehensive summary with citations."
     )
 
@@ -60,7 +60,7 @@ def render_form():
         topic = st.text_input(
             "Research Topic",
             placeholder="Enter your research topic...",
-            help="Supports English and Persian"
+            help="Supports any language"
         )
         
         col1, col2 = st.columns(2)

@@ -36,7 +36,7 @@ citation_strategy = st.builds(
     key_points=st.lists(text_strategy, min_size=1, max_size=10),
     comparison=text_strategy,
     citations=st.lists(citation_strategy, min_size=1, max_size=10),
-    language=st.sampled_from(["en", "fa"])
+    language=st.sampled_from(["en", "fa", "ja", "es", "de", "fr", "zh-cn"])
 )
 @settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=None)
 def test_json_output_is_valid(summary, key_points, comparison, citations, language):
@@ -60,7 +60,7 @@ def test_json_output_is_valid(summary, key_points, comparison, citations, langua
     key_points=st.lists(text_strategy, min_size=1, max_size=10),
     comparison=text_strategy,
     citations=st.lists(citation_strategy, min_size=1, max_size=10),
-    language=st.sampled_from(["en", "fa"])
+    language=st.sampled_from(["en", "fa", "ja", "es", "de", "fr", "zh-cn"])
 )
 @settings(max_examples=100, suppress_health_check=[HealthCheck.too_slow], deadline=None)
 def test_markdown_contains_all_headers(summary, key_points, comparison, citations, language):

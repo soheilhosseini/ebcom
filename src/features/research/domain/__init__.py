@@ -15,7 +15,7 @@ from src.features.research.domain.models import (
     FinalReport,
     ProgressEvent,
 )
-from src.features.research.domain.enums import OutputFormat, SupportedLanguage
+from src.features.research.domain.enums import OutputFormat, DEFAULT_LANGUAGE
 from src.features.research.domain.interfaces import (
     SearchProvider,
     ContentExtractor,
@@ -43,7 +43,7 @@ __all__ = [
     "ProgressEvent",
     # Enums
     "OutputFormat",
-    "SupportedLanguage",
+    "DEFAULT_LANGUAGE",
     # Interfaces
     "SearchProvider",
     "ContentExtractor",

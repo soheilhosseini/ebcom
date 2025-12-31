@@ -5,14 +5,7 @@ Enumerations for the research feature.
 from enum import Enum
 
 
-class SupportedLanguage(str, Enum):
-    """Supported languages for research output."""
-    ENGLISH = "en"
-    PERSIAN = "fa"
-    
-    @classmethod
-    def get_default(cls) -> "SupportedLanguage":
-        return cls.ENGLISH
+DEFAULT_LANGUAGE = "en"
 
 
 class OutputFormat(str, Enum):

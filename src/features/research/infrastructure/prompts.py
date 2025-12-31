@@ -4,20 +4,15 @@ LLM prompt templates for the research feature.
 Centralizes all prompts for easier maintenance.
 """
 
-from src.features.research.domain.enums import SupportedLanguage
-from src.features.research.constants import KEY_POINTS_MIN, KEY_POINTS_MAX
+from src.features.research.constants import KEY_POINTS_MIN, KEY_POINTS_MAX, LANGUAGE_NAMES
 
 
 def get_language_instruction(language: str) -> str:
     """Get language-specific instruction for LLM prompts."""
-    if language == SupportedLanguage.PERSIAN.value:
-        return (
-            "You MUST write your entire response in Persian (Farsi). "
-            "Do not use English."
-        )
+    lang_name = LANGUAGE_NAMES.get(language, language.upper())
     return (
-        "You MUST write your entire response in English. "
-        "Do not use other languages."
+        f"You MUST write your entire response in {lang_name}. "
+        f"Do not use other languages."
     )
 
 
