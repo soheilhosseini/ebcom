@@ -83,8 +83,8 @@ flowchart TB
 
 ```bash
 # Clone the repository
-git clone <repo-url>
-cd research-ai-assistant
+git clone https://github.com/ebcom/ebcom.git
+cd ebcom
 
 # Install dependencies
 pip install -r requirements.txt
